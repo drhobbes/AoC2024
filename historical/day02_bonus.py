@@ -1,3 +1,4 @@
+''' 2015 day 19 '''
 import sys
 
 replacements = {}
