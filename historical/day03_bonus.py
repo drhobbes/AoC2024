@@ -1,3 +1,4 @@
+''' 2020 day 02 '''
 def validate(policy, pwd):
     parts = policy.split(' ')
     letter = parts[1]
