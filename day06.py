@@ -2,7 +2,7 @@ layout = []
 guard_start = []
 visited = []
 
-with open('day06_babyinput.txt','r') as f:
+with open('day06_input.txt','r') as f:
   line_index = 0
   for line in f:
     if '^' in line:
@@ -13,52 +13,89 @@ with open('day06_babyinput.txt','r') as f:
     
 visited[guard_start[0]][guard_start[1]] = 'U'
 
-def move_up(guard):
+def move_up(guard, new_visited, layout):
   i = guard[0]-1
   while i >= 0 and layout[i][guard[1]] != '#':
-    visited[i][guard[1]] = 'U'
+    if new_visited[i][guard[1]] == 'U':
+      raise Exception('cycle detected')
+    new_visited[i][guard[1]] = 'U'
     i -= 1
   guard[0] = -1 if i == -1 else i+1
 
-def move_down(guard):
+def move_down(guard, new_visited, layout):
   i = guard[0]+1
   while i < len(layout) and layout[i][guard[1]] != '#':
-    visited[i][guard[1]] = 'D'
+    if new_visited[i][guard[1]] == 'D':
+      raise Exception('cycle detected')
+    new_visited[i][guard[1]] = 'D'
     i += 1
   guard[0] = -1 if i == len(layout) else i-1
 
-def move_right(guard):
+def move_right(guard, new_visited, layout):
   j = guard[1]+1
   while j < len(layout[guard[0]]) and layout[guard[0]][j] != '#':
-    visited[guard[0]][j] = 'R'
+    if new_visited[guard[0]][j] == 'R':
+        raise Exception('cycle detected')
+    new_visited[guard[0]][j] = 'R'
     j += 1
   guard[1] = -1 if j == len(layout) else j-1
 
-def move_left(guard):
+def move_left(guard, new_visited, layout):
   j = guard[1]-1
   while j >= 0 and layout[guard[0]][j] != '#':
-    visited[guard[0]][j] = 'L'
+    if new_visited[guard[0]][j] == 'L':
+      raise Exception('cycle detected')
+    new_visited[guard[0]][j] = 'L'
     j -= 1
   guard[1] = -1 if j == -1 else j+1
 
-moves = 0
-while guard_start[0] != -1 and guard_start[1] != -1:
-  if moves % 4 == 0:
-    move_up(guard_start)
-  elif moves % 4 == 1:
-    move_right(guard_start)
-  elif moves % 4 == 2:
-    move_down(guard_start)
-  else:
-    move_left(guard_start)
-  moves += 1
+def run_maze(i, j, visited, layout):
+  moves = 0
+  guard = [i,j]
+  while guard[0] != -1 and guard[1] != -1:
+    if moves % 4 == 0:
+      move_up(guard, visited, layout)
+    elif moves % 4 == 1:
+      move_right(guard, visited, layout)
+    elif moves % 4 == 2:
+      move_down(guard, visited, layout)
+    else:
+      move_left(guard, visited, layout)
+    moves += 1
+
+run_maze(guard_start[0],guard_start[1], visited, layout)
 
 total = 0
 for row in visited:
   total += len(row)-row.count(' ')
 print('part 1:',total)
 
-################################################
+################################################ APPROACH 2: brute fucking force
+
+def add_obstacle(obst_i,obst_j):
+  new_layout = []
+  for i in range(len(layout)):
+    if i == obst_i:
+      new_layout.append(layout[i][:obst_j]+'#'+layout[i][obst_j+1:])
+    else:
+      new_layout.append(layout[i])
+  return new_layout
+
+num_cycles = 0
+for i in range(len(visited)):
+  for j in range(len(visited[i])):
+    if visited[i][j] != ' ':
+      # try adding an obstacle there and run the thingie
+      new_layout = add_obstacle(i,j)
+      new_visited = [[' ']*len(new_layout[0]) for row in new_layout]
+      try:
+        run_maze(guard_start[0],guard_start[1],new_visited,new_layout)
+      except Exception as error:
+        #print('obstacle at',i,j)
+        num_cycles += 1
+print('part 2:',num_cycles)
+
+################################################ APPROACH 1: does not handle more complicated loops
 
 def blockable_sw(loc_row, loc_col):
   if loc_col == 0: return False
@@ -70,40 +107,52 @@ def blockable_sw(loc_row, loc_col):
     m += 1
   if m == len(layout): return False
   # coord 2 is [loc_row+1][k], coord 3 is [m][k-1]; blockable at [m-1][loc_col-1]
+  if visited[m-1][loc_col-1] == ' ': return False
+  print('blockable sw:',m-1,loc_col-1)
   return True
 
 def blockable_se(loc_row, loc_col):
   if loc_row+1 < len(layout) and layout[loc_row+1][loc_col+1:].find('#') != -1:
-    k = layout[loc_row+1][loc_col+1:].find('#')+loc_row+1
+    k = layout[loc_row+1][loc_col+1:].find('#')+loc_col+1
   else: return False
   m = loc_row+2
   while m < len(layout) and layout[m][loc_col-1] != '#':
     m += 1
   if m == len(layout): return False
   # coord 2 is [loc_row+1][k], coord 3 is [m][loc_col-1]
+  if visited[m+1][k-1] == ' ': return False
+  print('blockable se:',m+1,k-1)
   return True
   
 def blockable_ne(loc_row, loc_col):
   m = loc_row+2
   while m < len(layout) and layout[m][loc_col-1] != '#':
     m += 1
-  if m == len(layout): return False
+  if m+1 >= len(layout): return False
   if m+1 < len(layout) and layout[m+1][loc_col+1:].find('#') != -1:
-    return True
+    k = layout[m+1][loc_col+1:].find('#')+loc_col+1
   else: return False
+  if k+1 >= len(layout[loc_row]): return False
+  if visited[loc_row+1][k+1] == ' ': return False
+  print('blockable ne:',loc_row+1,k+1)
+  return True
   # coord 2 is [m][loc_col-1], coord 3 is [m+1][k]
 
 def blockable_nw(loc_row, loc_col):
   if loc_row == 0: return False
   if layout[loc_row-1][:loc_col].find('#') == -1: return False
+  k = layout[loc_row-1][:loc_col].find('#')
+  if k-1 < 0: return False
   m = loc_row-2
   while m >= 0 and layout[m][loc_col+1] != '#':
     m -= 1
   if m == -1: return False
+  if visited[k-1][m+1] == ' ': return False
+  print('blockable nw:',k-1,m+1)
   return True
   # coord 2 is [loc_row-1][m], coord 3 is [k][loc_col+1]
 
-count = 0
+'''count = 0
 for i in range(len(layout)):
   start = 0
   obst_j = layout[i].find('#')
@@ -114,4 +163,4 @@ for i in range(len(layout)):
     if blockable_nw(i, obst_j): count += 1
     start = obst_j + 1
     obst_j = layout[i].find('#',start)
-print('part 2:',count)
+print('part 2:',count)'''
