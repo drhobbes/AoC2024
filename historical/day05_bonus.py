@@ -1,3 +1,4 @@
+''' 2017 day 1 '''
 with open('day05_bonusinput.txt','r') as f:
     digits = f.readline().strip()
 
