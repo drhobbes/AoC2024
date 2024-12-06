@@ -1,3 +1,4 @@
+''' 2019 day 10 '''
 import math
 
 coords = {}
