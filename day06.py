@@ -2,7 +2,9 @@ layout = []
 guard_start = []
 visited = []
 
-with open('day06_input.txt','r') as f:
+''' loading the file: make note of where the guard starts and create blank template for 
+tracking movement '''
+with open('day06_input.txt','r') as f:B
   line_index = 0
   for line in f:
     if '^' in line:
@@ -10,9 +12,15 @@ with open('day06_input.txt','r') as f:
     layout.append(line.strip())
     visited.append([' ']*len(line.strip()))
     line_index += 1
-    
-visited[guard_start[0]][guard_start[1]] = 'U'
 
+###################################################################################################
+
+''' All four of these helper methods work the same way:
+  Move the guard up through the room until:
+  a) they encounter an obstacle and stop,
+  b) they exit the room (in which case we set the relevant coordinate to -1), or
+  c) they start retracing steps, in which case they're in a cycle
+'''
 def move_up(guard, new_visited, layout):
   i = guard[0]-1
   while i >= 0 and layout[i][guard[1]] != '#':
@@ -49,10 +57,17 @@ def move_left(guard, new_visited, layout):
     j -= 1
   guard[1] = -1 if j == -1 else j+1
 
+################################################ PART 1: run the maze
+
+# part 1: guard begins facing upward:
+visited[guard_start[0]][guard_start[1]] = 'U'
+
 def run_maze(i, j, visited, layout):
   moves = 0
   guard = [i,j]
+
   while guard[0] != -1 and guard[1] != -1:
+    # move in the sequence: up/right/down/left
     if moves % 4 == 0:
       move_up(guard, visited, layout)
     elif moves % 4 == 1:
@@ -70,9 +85,13 @@ for row in visited:
   total += len(row)-row.count(' ')
 print('part 1:',total)
 
-################################################ APPROACH 2: brute fucking force
+################################################ PART 2 APPROACH 2: brute fucking force
+
+''' the approach here is to attempt adding an obstacle in every location that the guard visited
+back in part 1 and then just run the maze again to see if a cycle occurs '''
 
 def add_obstacle(obst_i,obst_j):
+  ''' adds a single obstacle to the original layout at location (i,j) '''
   new_layout = []
   for i in range(len(layout)):
     if i == obst_i:
@@ -85,17 +104,30 @@ num_cycles = 0
 for i in range(len(visited)):
   for j in range(len(visited[i])):
     if visited[i][j] != ' ':
-      # try adding an obstacle there and run the thingie
+      # the guard walks here: try adding an obstacle and re-run the maze with a blank walk tracker
       new_layout = add_obstacle(i,j)
       new_visited = [[' ']*len(new_layout[0]) for row in new_layout]
       try:
+        # if a cycle occurs, the helper method will raise an exception and interrupt this method
         run_maze(guard_start[0],guard_start[1],new_visited,new_layout)
       except Exception as error:
-        #print('obstacle at',i,j)
+        # count the number of times we exited run_maze() with an error condition (cycle)
         num_cycles += 1
 print('part 2:',num_cycles)
 
-################################################ APPROACH 1: does not handle more complicated loops
+################################################ PART 2 ABANDONED: doesn't handle complicated loops
+
+''' the approach here WAS to try and mathematically calculate if obstacles were in the correct
+configuration to induce a cycle if we added Just One More - and it got all of the square-shaped
+cycles great but anything more complicated than a square was a big ol nope 
+
+the observation was that a (square) cycle is caused by this configuration of obstacles (with
+varying sizes):
+       #
+            #
+      #
+           #
+'''
 
 def blockable_sw(loc_row, loc_col):
   if loc_col == 0: return False
