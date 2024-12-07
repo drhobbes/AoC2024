@@ -1,10 +1,12 @@
+import time
+
 layout = []
 guard_start = []
 visited = []
 
 ''' loading the file: make note of where the guard starts and create blank template for 
 tracking movement '''
-with open('day06_input.txt','r') as f:B
+with open('day06_input.txt','r') as f:
   line_index = 0
   for line in f:
     if '^' in line:
@@ -78,12 +80,15 @@ def run_maze(i, j, visited, layout):
       move_left(guard, visited, layout)
     moves += 1
 
+start = time.perf_counter()
 run_maze(guard_start[0],guard_start[1], visited, layout)
 
 total = 0
 for row in visited:
   total += len(row)-row.count(' ')
+stop = time.perf_counter()
 print('part 1:',total)
+print('part 1 elapsed:',stop-start)
 
 ################################################ PART 2 APPROACH 2: brute fucking force
 
@@ -100,6 +105,7 @@ def add_obstacle(obst_i,obst_j):
       new_layout.append(layout[i])
   return new_layout
 
+start = time.perf_counter()
 num_cycles = 0
 for i in range(len(visited)):
   for j in range(len(visited[i])):
@@ -113,7 +119,9 @@ for i in range(len(visited)):
       except Exception as error:
         # count the number of times we exited run_maze() with an error condition (cycle)
         num_cycles += 1
+stop = time.perf_counter()
 print('part 2:',num_cycles)
+print('part 2 elapsed:',stop-start)
 
 ################################################ PART 2 ABANDONED: doesn't handle complicated loops
 
