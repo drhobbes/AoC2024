@@ -22,29 +22,29 @@ def run_program(a):
             elif operand == 6: operand = c
         match program[inst_ptr]:
             case 0:
-                print('a=a//8')
+                #print('a=a//8')
                 a = a//(2**operand)
             case 1:
-                print('b=b^'+str(operand))
+                #print('b=b^'+str(operand))
                 b = b^operand
             case 2:
-                print('b=a%8')
+                #print('b=a%8')
                 b = operand%8
             case 3:
-                if a != 0: print('GOTO 0')
+                #if a != 0: print('GOTO 0')
                 inst_ptr = operand-2 if a != 0 else inst_ptr
             case 4:
-                print('b=b^c')
+                #print('b=b^c')
                 b = b^c
             case 5:
-                print('out(b)')
+                #print('out(b)')
                 output.append(str(operand%8))
             case 6:
                 b = a//(2**operand)
             case 7:
-                print('c=a//2**b')
+                #print('c=a//2**b')
                 c = a//(2**operand)
         inst_ptr += 2
-        print_registers(a,b,c)
+        #print_registers(a,b,c)
     return output
 print('part 1:',','.join(run_program(a)))
